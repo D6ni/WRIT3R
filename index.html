@@ -258,10 +258,8 @@
         }
         .analysis-avatars { display: flex; gap: 10px; }
         .analysis-avatar-img { width: 50px; height: 50px; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
-        .analysis-avatar-manual {
-            width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            font-size: 18px; border: 1px solid rgba(255,255,255,0.3); text-shadow: 0 1px 3px rgba(0,0,0,0.5);
-        }
+        .analysis-avatar-manual { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; 
+            font-size: 18px; border: 1px solid rgba(255,255,255,0.3); text-shadow: 0 1px 3px rgba(0,0,0,0.5); overflow: hidden; white-space: nowrap;}
         .analysis-types { display: flex; gap: 8px; margin-left: auto; } 
         .analysis-grid-container { display: grid; grid-template-columns: 1fr; gap: 20px; }
         @media (min-width: 768px) { .analysis-grid-container { grid-template-columns: 1fr 1fr; } }
@@ -470,8 +468,8 @@
         const typeIcons = {
             normal: '⚪', fuego: '🔥', agua: '💧', electrico: '⚡',
             planta: '🌿', hielo: '❄️', lucha: '🥊', veneno: '☠️',
-            tierra: '🏜️', volador: '🕊️', psiquico: '🔮', bicho: '🪲',
-            roca: '🪨', fantasma: '👻', dragon: '🐉', acero: '🔩',
+            tierra: '🏜️', volador: '🕊️', psiquico: '🔮', bicho: '🦗',
+            roca: '🗿', fantasma: '👻', dragon: '🐉', acero: '🔩',
             siniestro: '🌑', hada: '✨'
         };
 
@@ -32721,6 +32719,12 @@
                     }
                     const icons = types.map(x => typeIcons[x]).join('');
                     manDiv.innerHTML = icons;
+
+                    if (types.length > 1) {
+                        manDiv.style.fontSize = '12px';
+                        manDiv.style.letterSpacing = '-1px';
+                    }
+
                     avatarsDiv.appendChild(manDiv);
                 }
             });
