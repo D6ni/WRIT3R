@@ -17,11 +17,9 @@
     <!-- Librerías JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-    <!-- Librería para el efecto de pasar página -->
     <script src="https://cdn.jsdelivr.net/npm/page-flip/dist/js/page-flip.browser.js"></script>
 
     <style>
-        /* --- ESTILOS GENERALES Y DEL EDITOR (WRIT3R UI) --- */
         :root {
             --bg-top: #131720;
             --bg-bottom: #020203;
@@ -36,8 +34,6 @@
             --folder-color: #f0c674;
             --font-ui: 'Roboto', Helvetica, Arial, sans-serif;
             --font-editor: 'Merriweather', serif;
-            
-            /* Variables Lector */
             --reader-bg: #1a1a1a;
             --reader-page-bg: #fdfbf7;
             --reader-text: #2c2c2c;
@@ -65,7 +61,6 @@
             user-select: none; 
         }
 
-        /* Contenedor Principal App */
         .app-container {
             width: 95vw;
             height: 92vh;
@@ -99,7 +94,6 @@
         #exit-zen-btn:hover { color: var(--accent); border-color: var(--accent); background: var(--accent-hover); }
         .app-container.zen-mode #exit-zen-btn { opacity: 1; pointer-events: all; }
 
-        /* Sidebar */
         aside {
             background: rgba(5, 7, 10, 0.4); border-right: 1px solid var(--glass-border);
             display: flex; flex-direction: column; padding: 20px;
@@ -127,7 +121,6 @@
         .tree-item.drop-top { border-top: 2px solid var(--accent) !important; border-top-left-radius: 0; border-top-right-radius: 0; }
         .tree-item.drop-bottom { border-bottom: 2px solid var(--accent) !important; border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
         
-        /* Main Editor Area */
         main { display: flex; flex-direction: column; padding: 40px 60px; position: relative; background: transparent; height: 100%; overflow: hidden; }
         .editor-header { margin-bottom: 30px; display: flex; flex-direction: column; gap: 10px; max-width: 720px; width: 100%; margin-left: auto; margin-right: auto; transition: opacity 0.3s; }
         .header-top-row { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--glass-border); padding-bottom: 5px; transition: all 0.4s; }
@@ -146,13 +139,11 @@
         .doc-link { color: var(--accent); text-decoration: none; border-bottom: 1px dotted var(--accent); cursor: pointer; transition: 0.2s; }
         .doc-link:hover { background: var(--accent-hover); color: #fff; }
 
-        /* Status Bar */
         .status-bar { position: absolute; bottom: 30px; right: 40px; display: flex; align-items: center; gap: 20px; pointer-events: none; z-index: 10; }
         #status-msg { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px; font-weight: 600; opacity: 0.5; }
         #status-stats { font-size: 1.1rem; font-weight: 500; color: var(--accent); background: rgba(19, 23, 32, 0.85); border: 1px solid rgba(100, 181, 246, 0.3); padding: 10px 18px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4); backdrop-filter: blur(5px); font-family: var(--font-ui); min-width: 120px; text-align: center; transition: all 0.3s ease; }
         .zen-mode #status-stats { opacity: 0.7; border-color: transparent; background: transparent; box-shadow: none; }
 
-        /* Overlays (Graph, Context Menu, Modal) */
         #graph-view { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #050608; z-index: 5000; display: none; opacity: 0; transition: opacity 0.3s; }
         #graph-view.active { display: block; opacity: 1; }
         #graph-canvas { display: block; width: 100%; height: 100%; cursor: grab; }
@@ -189,7 +180,6 @@
         .toast.show { opacity: 1; bottom: 40px; }
         .toast.error i { color: var(--danger); }
         
-        /* Novel Cover View Styles */
         #novel-cover-view { display: none; flex-direction: column; align-items: center; justify-content: flex-start; padding: 60px 40px; height: 100%; overflow-y: auto; text-align: center; max-width: 800px; margin: 0 auto; transition: opacity 0.3s ease; }
         #novel-cover-view.active { display: flex; }
         #novel-cover-view h1 { font-family: var(--font-editor); font-size: 3.5rem; font-weight: 700; color: var(--text-main); margin-bottom: 20px; letter-spacing: 0.02em; }
@@ -207,7 +197,6 @@
         .btn-read-mode { background: rgba(100, 181, 246, 0.15); border: 1px solid var(--accent); color: var(--accent); font-weight: 600; box-shadow: 0 0 10px rgba(100, 181, 246, 0.1); }
         .btn-read-mode:hover { background: var(--accent); color: var(--bg-bottom); box-shadow: 0 0 20px rgba(100, 181, 246, 0.4); transform: translateY(-2px); }
 
-        /* Chapter Navigation */
         .chapter-navigation { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); background: rgba(19, 23, 32, 0.95); border: 1px solid rgba(100, 181, 246, 0.3); border-radius: 50px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5); backdrop-filter: blur(8px); z-index: 10; display: none; height: 44px; padding: 0 8px; align-items: center; justify-content: center; gap: 0; }
         .chapter-navigation.active { display: flex; }
         .chapter-navigation button, #current-chapter-title { height: 100%; display: flex; align-items: center; justify-content: center; text-transform: uppercase; font-family: var(--font-ui); letter-spacing: 1px; line-height: 1; }
@@ -216,7 +205,6 @@
         .chapter-navigation button:disabled { opacity: 0.2; cursor: not-allowed; }
         #current-chapter-title { color: var(--text-main); font-weight: 700; font-size: 0.8rem; max-width: 350px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 15px; padding-top: 1px; }
 
-        /* Helpers for tree */
         .toggle-arrow { width: 20px; height: 20px; margin-right: 6px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
         .arrow-svg { width: 12px; height: 12px; }
         .arrow-path { fill: none; stroke: var(--text-muted); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; transition: d 0.25s cubic-bezier(0.4, 0, 0.2, 1), stroke 0.2s ease; }
@@ -225,7 +213,6 @@
         #novel-cover-view.active ~ .editor-header, #novel-cover-view.active ~ #editor, #novel-cover-view.active ~ .status-bar { display: none; }
         #selection-marquee { position: absolute; border: 1px solid var(--accent); background: rgba(100, 181, 246, 0.2); display: none; z-index: 10; pointer-events: none; }
         
-        /* Otros elementos del modal */
         .link-results { max-height: 200px; overflow-y: auto; display: flex; flex-direction: column; gap: 5px; margin-top: 10px;}
         .link-result-item { padding: 10px; border-radius: 5px; cursor: pointer; font-size: 0.9rem; color: #a0aab5; display: flex; align-items: center; gap: 10px; }
         .link-result-item:hover { background: var(--accent-hover); color: var(--accent); }
@@ -242,18 +229,14 @@
         .project-item.active { border-left: 3px solid var(--accent); background: rgba(100, 181, 246, 0.05); }
         .project-actions { display: flex; gap: 5px; }
 
-
-        /* ==========================================================================
-           READER MODE STYLES (INTEGRATED)
-           ========================================================================== */
         #reader-view {
             position: fixed;
             top: 0; left: 0;
             width: 100vw; height: 100vh;
             background-color: var(--reader-bg);
             background-image: radial-gradient(circle at center, #2a2a2a 0%, #111 100%);
-            z-index: 10000; /* Highest layer */
-            display: none; /* Hidden by default */
+            z-index: 10000; 
+            display: none;
             justify-content: center;
             align-items: center;
             flex-direction: column;
@@ -277,20 +260,18 @@
             margin: auto;
         }
 
-        /* Reader Page Styles */
         .page {
             background-color: var(--reader-page-bg);
             padding: 5vh 5vw;
             box-sizing: border-box;
             box-shadow: inset -3px 0 10px rgba(0,0,0,0.05);
             overflow: hidden;
-            display: none; /* Managed by page-flip */
+            display: none;
             border-radius: 3px; 
             color: var(--reader-text);
             font-family: 'Merriweather', serif;
         }
 
-        /* Reader Cover */
         .page-cover {
             background-color: #1e2630;
             color: #f0f0f0;
@@ -331,7 +312,6 @@
             opacity: 0.7;
         }
 
-        /* Reader Content */
         .page-content {
             font-size: clamp(0.95rem, 1.3vh, 1.2rem); 
             line-height: 1.8;
@@ -371,7 +351,6 @@
         .page p { margin-bottom: 1.5em; text-indent: 1.5em; }
         .page p:first-of-type { text-indent: 0; }
 
-        /* Reader ToC */
         .toc-list { list-style: none; padding: 0; }
         .toc-item {
             display: flex;
@@ -384,7 +363,6 @@
         }
         .toc-item:hover { color: #b8860b; font-weight: bold; padding-left: 5px; }
 
-        /* Reader Controls */
         .reader-controls {
             position: fixed;
             bottom: 20px;
@@ -405,6 +383,7 @@
             background: transparent; border: none; color: #ccc;
             font-size: 1.2rem; cursor: pointer; transition: 0.2s;
             display: flex; align-items: center; justify-content: center;
+            gap: 10px;
         }
         .reader-btn:hover { color: var(--reader-accent); transform: scale(1.1); }
         .reader-btn.close:hover { color: var(--danger); }
@@ -432,7 +411,11 @@
                     <button class="btn-icon" onclick="promptCreateFolder()" title="New Folder"><i class="fas fa-folder-plus"></i></button>
                     <button class="btn-icon" onclick="createFile()" title="New File"><i class="fas fa-file-medical"></i></button>
                     <button class="btn-icon" onclick="toggleGraphView()" title="Graph View"><i class="fas fa-project-diagram"></i></button>
+                    <span style="width:1px; background:var(--glass-border); margin:0 4px;"></span> <!-- Separador visual -->
+                    <button class="btn-icon" onclick="downloadBackup()" title="Download Backup"><i class="fas fa-download"></i></button>
+                    <button class="btn-icon" onclick="triggerImport()" title="Load Backup"><i class="fas fa-upload"></i></button>
                 </div>
+                <input type="file" id="import-file-input" style="display: none;" accept=".json" onchange="loadBackup(this)">
             </div>
             <div class="file-tree" id="fileTree"></div>
             <div id="selection-marquee"></div>
@@ -441,7 +424,6 @@
         <main>
             <button id="exit-zen-btn" onclick="toggleZenMode()" title="Exit Zen Mode"><i class="fas fa-compress-alt"></i></button>
 
-            <!-- Novel Cover / Management View -->
             <div id="novel-cover-view">
                 <h1 id="novel-cover-title"></h1>
                 <h2 id="novel-cover-author"></h2>
@@ -457,7 +439,6 @@
                 </div>
             </div>
 
-            <!-- Editor Header -->
             <div class="editor-header">
                 <div class="header-top-row">
                     <input type="text" id="doc-title" placeholder="Untitled" oninput="updateCurrentFile()">
@@ -469,17 +450,14 @@
                 <div id="relationship-tags"></div>
             </div>
 
-            <!-- Editor Content -->
             <div id="editor" contenteditable="true" oninput="updateCurrentFile()"></div>
 
-            <!-- Bottom Bar -->
             <div class="status-bar">
                 <span id="status-msg">Ready</span>
                 <span class="stat-separator"></span>
                 <span id="status-stats">0 words</span>
             </div>
 
-            <!-- Chapter Navigation -->
             <div id="chapter-navigation" class="chapter-navigation">
                 <button id="prev-chapter-btn" onclick="navigateToChapter('prev')"><i class="fas fa-chevron-left"></i> Previous</button>
                 <span id="current-chapter-title" style="color:var(--text-main); font-weight:500;"></span>
@@ -488,7 +466,6 @@
 
         </main>
 
-        <!-- Modals -->
         <div id="app-modal" class="modal-overlay">
             <div class="modal-box">
                 <h3 id="modal-title" class="modal-title">Title</h3>
@@ -503,9 +480,6 @@
         <div id="toast" class="toast"><i class="fas fa-info-circle"></i> <span>Message</span></div>
     </div>
 
-    <!-- OVERLAYS -->
-    
-    <!-- Graph View -->
     <div id="graph-view">
         <div class="graph-controls">
             <button class="btn-graph-close" onclick="toggleGraphView()"><i class="fas fa-times"></i> Close</button>
@@ -513,7 +487,6 @@
         <canvas id="graph-canvas"></canvas>
     </div>
 
-    <!-- READER VIEW (SPA INTEGRATION) -->
     <div id="reader-view">
         <div id="reader-loader" class="loader">
             <i class="fas fa-circle-notch fa-spin fa-2x" style="color:var(--reader-accent)"></i>
@@ -526,12 +499,11 @@
 
         <div class="reader-controls">
             <button class="reader-btn" onclick="bookInstance.flipPrev()"><i class="fas fa-arrow-left"></i></button>
-            <button class="reader-btn close" onclick="closeReaderMode()"><i class="fas fa-times"></i> Close Book</button>
+            <button class="reader-btn close" onclick="closeReaderMode()">Close Book <i class="fas fa-times"></i></button>
             <button class="reader-btn" onclick="bookInstance.flipNext()"><i class="fas fa-arrow-right"></i></button>
         </div>
     </div>
 
-    <!-- Context Menu -->
     <div id="context-menu">
         <div id="ctx-export-btn" class="ctx-item" onclick="exportItem()">
             <i class="fas fa-file-export" style="margin-right:8px"></i> Export (.doc)
@@ -549,7 +521,6 @@
     </div>
 
     <script>
-        // ======================== CORE APP LOGIC ========================
         let projects = JSON.parse(localStorage.getItem('writerApp_projects')) || ['Default Project'];
         let currentProject = localStorage.getItem('writerApp_currentProject') || 'Default Project';
 
@@ -570,7 +541,6 @@
         let lastClickedId = null;
         let currentNovelId = null;
 
-        // UI References
         const fileTreeEl = document.getElementById('fileTree');
         const sidebarEl = document.getElementById('sidebar');
         const marqueeEl = document.getElementById('selection-marquee');
@@ -581,7 +551,6 @@
         const statusStats = document.getElementById('status-stats');
         const relTagsDiv = document.getElementById('relationship-tags');
         const projectNameEl = document.getElementById('current-project-name');
-
         const novelCoverView = document.getElementById('novel-cover-view');
         const novelCoverTitle = document.getElementById('novel-cover-title');
         const novelCoverAuthor = document.getElementById('novel-cover-author');
@@ -592,7 +561,6 @@
         const nextChapterBtn = document.getElementById('next-chapter-btn');
         const currentChapterTitleEl = document.getElementById('current-chapter-title');
 
-        // Graph References
         const graphView = document.getElementById('graph-view');
         const canvas = document.getElementById('graph-canvas');
         const ctx = canvas.getContext('2d');
@@ -606,13 +574,11 @@
         let isPanning = false;
         let startPan = { x: 0, y: 0 };
 
-        // Reader References
         let bookInstance = null;
         const readerView = document.getElementById('reader-view');
         const readerLoader = document.getElementById('reader-loader');
         const bookContainer = document.getElementById('book');
 
-        // Initial Setup
         updateProjectUI();
         renderTree();
 
@@ -638,8 +604,6 @@
         } else {
             statusMsg.innerText = 'Create a file or a novel to start';
         }
-
-        // ======================== READER LOGIC (SPA INTEGRATION) ========================
         
         function openReaderMode() {
             if (!currentNovelId) {
@@ -653,13 +617,11 @@
                 return;
             }
             
-            // Show Reader View
             readerView.style.display = 'flex';
             setTimeout(() => { readerView.classList.add('active'); }, 10);
             readerLoader.style.display = 'flex';
-            bookContainer.innerHTML = ''; // Reset book
+            bookContainer.innerHTML = '';
 
-            // Initialize Book Construction
             setTimeout(() => {
                 buildBook();
             }, 500);
@@ -678,17 +640,14 @@
         }
 
         function buildBook() {
-            // Get current novel data
             let novel = fileSystem.find(f => f.id === currentNovelId);
             if (!novel) return;
 
-            // Get chapters
             let chapters = fileSystem.filter(f => f.type === 'chapter' && f.parentId === novel.id);
             chapters.sort((a, b) => (a.order || 0) - (b.order || 0));
 
             const CHARS_PER_PAGE = 1600; 
             let processedChapters = [];
-            // Page offset: Cover(2) + Title(2) + ToC(2) = 6 start index
             let globalPageIndexCounter = 6; 
 
             chapters.forEach(chap => {
@@ -794,7 +753,6 @@
 
             bookContainer.innerHTML = html;
 
-            // Initialize PageFlip
             const pageFlip = new St.PageFlip(document.getElementById('book'), {
                 width: 600, 
                 height: 900,
@@ -819,7 +777,6 @@
             bookInstance = pageFlip;
         }
 
-        // ======================== APP FUNCTIONS ========================
 
         function toggleZenMode() {
             const container = document.querySelector('.app-container');
@@ -835,9 +792,30 @@
                 if (container.classList.contains('zen-mode')) {
                     toggleZenMode();
                 }
-                // Also close reader if open
                 if (readerView.classList.contains('active')) {
                     closeReaderMode();
+                }
+            }
+
+            if (e.key === 'Delete') {
+                const isEditing = e.target.tagName === 'INPUT' || 
+                                  e.target.tagName === 'TEXTAREA' || 
+                                  e.target.isContentEditable;
+
+                if (isEditing) return; 
+                const container = document.querySelector('.app-container');
+                if (container.classList.contains('zen-mode')) {
+                    toggleZenMode();
+                    return;
+                }
+                if (readerView.classList.contains('active')) {
+                    closeReaderMode();
+                    return;
+                }
+                if (selectedFileIds.size > 0) {
+                    e.preventDefault();
+                    contextTargetId = null; 
+                    promptDelete();
                 }
             }
         });
@@ -901,17 +879,28 @@
                 const li = document.createElement('li');
                 li.className = `project-item ${p === currentProject ? 'active' : ''}`;
 
-                let deleteBtn = '';
+                const span = document.createElement('span');
+                span.style.flex = '1';
+                span.innerText = p;
+                span.addEventListener('click', () => switchProject(p));
+
+                const actionsDiv = document.createElement('div');
+                actionsDiv.className = 'project-actions';
+
                 if (projects.length > 1) { 
-                    deleteBtn = `<button class="btn btn-danger btn-small" onclick="promptProjectDelete('${p}', event)"><i class="fas fa-trash"></i></button>`;
+                    const delBtn = document.createElement('button');
+                    delBtn.className = 'btn btn-danger btn-small';
+                    delBtn.innerHTML = '<i class="fas fa-trash"></i>';
+                    delBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        promptProjectDelete(p);
+                    };
+                    actionsDiv.appendChild(delBtn);
                 }
 
-                li.innerHTML = `
-<span style="flex:1" onclick="switchProject('${p}')">${p}</span>
-<div class="project-actions">
-                    ${deleteBtn}
-</div>
-                `;
+                li.appendChild(span);
+                li.appendChild(actionsDiv);
+
                 li.oncontextmenu = (e) => {
                     e.preventDefault();
                     showProjectContextMenu(e, p);
@@ -1246,14 +1235,13 @@
             }
         });
 
-        // Modal Functions
         const modalEl = document.getElementById('app-modal');
         const modalTitle = document.getElementById('modal-title');
         const modalMsg = document.getElementById('modal-msg');
         const modalBody = document.getElementById('modal-body');
         const modalConfirmBtn = document.getElementById('modal-confirm-btn');
 
-        function openModal({ title, message, type = 'confirm', inputVal = '', onConfirm, customHTML = '' }) {
+        function openModal({ title, message, type = 'confirm', inputVal = '', onConfirm, customHTML = '', confirmText = null, cancelIsDanger = false }) {
             modalTitle.innerText = title;
             modalMsg.innerText = message || '';
             modalMsg.style.display = message ? 'block' : 'none';
@@ -1278,7 +1266,20 @@
             }
 
             modalConfirmBtn.className = 'btn ' + (type === 'delete' ? 'btn-danger' : 'btn-confirm');
-            modalConfirmBtn.innerText = type === 'delete' ? 'Delete' : (type === 'search' ? 'Link' : (type === 'custom' ? 'Confirm' : 'Confirm'));
+            
+            if (confirmText) {
+                modalConfirmBtn.innerText = confirmText;
+            } else {
+                modalConfirmBtn.innerText = type === 'delete' ? 'Delete' : (type === 'search' ? 'Link' : (type === 'custom' ? 'Confirm' : 'Confirm'));
+            }
+
+            const cancelBtn = document.querySelector('.modal-actions .btn:first-child');
+            cancelBtn.className = 'btn btn-cancel';
+            
+            if (cancelIsDanger) {
+                cancelBtn.classList.remove('btn-cancel');
+                cancelBtn.classList.add('btn-danger');
+            }
 
             modalConfirmBtn.onclick = () => {
                 if (type === 'prompt') {
@@ -2176,6 +2177,99 @@ ${cleanContent}
                     return newId;
                 }
             }
+
+    function downloadBackup() {
+        const projectsList = JSON.parse(localStorage.getItem('writerApp_projects')) || ['Default Project'];
+        const currentProj = localStorage.getItem('writerApp_currentProject') || 'Default Project';
+        
+        const backupData = {
+            version: "1.0",
+            timestamp: new Date().toISOString(),
+            projects: projectsList,
+            currentProject: currentProj,
+            data: {}
+        };
+
+        projectsList.forEach(projName => {
+            const fsKey = 'writerApp_fs_' + projName;
+            const lastIdKey = 'writerApp_lastId_' + projName;
+            
+            backupData.data[fsKey] = localStorage.getItem(fsKey);
+            backupData.data[lastIdKey] = localStorage.getItem(lastIdKey);
+        });
+
+        const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: "application/json" });
+        const dateStr = new Date().toISOString().slice(0,10);
+        saveAs(blob, `${currentProj}.json`);
+        
+        showToast("Backup downloaded successfully!");
+    }
+
+    function triggerImport() {
+        document.getElementById('import-file-input').click();
+    }
+
+    function loadBackup(input) {
+        const file = input.files[0];
+        if (!file) return;
+
+        openModal({
+            title: 'Import Projects',
+            message: 'This will import projects from the backup file. If a project with the same name already exists, it will be updated with the new data.',
+            type: 'confirm',
+            confirmText: 'Import',
+            onConfirm: () => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const content = e.target.result;
+                        const parsedData = JSON.parse(content);
+
+                        if (!parsedData.projects || !parsedData.data) {
+                            showToast("Invalid Backup File", true);
+                            return;
+                        }
+
+                        let currentProjects = JSON.parse(localStorage.getItem('writerApp_projects')) || ['Default Project'];
+                        const importedProjects = parsedData.projects;
+                        const importedData = parsedData.data;
+
+                        importedProjects.forEach(projName => {
+                            if (!currentProjects.includes(projName)) {
+                                currentProjects.push(projName);
+                            }
+
+                            const fsKey = 'writerApp_fs_' + projName;
+                            const lastIdKey = 'writerApp_lastId_' + projName;
+
+                            if (importedData[fsKey]) {
+                                localStorage.setItem(fsKey, importedData[fsKey]);
+                            }
+                            if (importedData[lastIdKey]) {
+                                localStorage.setItem(lastIdKey, importedData[lastIdKey]);
+                            }
+                        });
+
+                        localStorage.setItem('writerApp_projects', JSON.stringify(currentProjects));
+                        
+                        if (parsedData.currentProject) {
+                            localStorage.setItem('writerApp_currentProject', parsedData.currentProject);
+                        }
+                        
+                        showToast("Projects imported successfully");
+                        setTimeout(() => location.reload(), 500);
+
+                    } catch (err) {
+                        console.error(err);
+                        showToast("Error reading file", true);
+                    }
+                };
+                reader.readAsText(file);
+            }
+        });
+        
+        input.value = '';
+    }
     </script>
 </body>
 </html>
