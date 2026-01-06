@@ -159,7 +159,20 @@
         .ctx-separator { height: 1px; background: var(--glass-border); margin: 4px 0; }
         
         .modal-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); backdrop-filter: blur(8px); z-index: 2000; display: none; justify-content: center; align-items: flex-start; padding-top: 10%; animation: fadeIn 0.2s ease-out; }
-        .modal-box { width: 400px; background: #131720; border: 1px solid var(--glass-border); border-radius: 12px; padding: 25px; box-shadow: 0 20px 50px rgba(0,0,0,0.8); display: flex; flex-direction: column; gap: 15px; transform: scale(0.95); animation: popIn 0.2s ease-out forwards; }
+        .modal-box { 
+            width: 90%;
+            max-width: 400px;
+            background: #131720; 
+            border: 1px solid var(--glass-border); 
+            border-radius: 12px; 
+            padding: 25px; 
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8); 
+            display: flex; 
+            flex-direction: column;
+            gap: 15px; 
+            transform: scale(0.95); 
+            animation: popIn 0.2s ease-out forwards; 
+        }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes popIn { from { transform: scale(0.9); opacity: 1; } to { transform: scale(1); opacity: 1; } }
         .modal-title { font-size: 1.1rem; font-weight: 600; color: var(--text-main); margin: 0; }
@@ -180,14 +193,28 @@
         .toast.show { opacity: 1; bottom: 40px; }
         .toast.error i { color: var(--danger); }
         
-        #novel-cover-view { display: none; flex-direction: column; align-items: center; justify-content: flex-start; padding: 60px 40px; height: 100%; overflow-y: auto; text-align: center; max-width: 800px; margin: 0 auto; transition: opacity 0.3s ease; }
+        #novel-cover-view { 
+            display: none; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            padding: 60px 40px; 
+            height: 100%; 
+            overflow-y: hidden; 
+            text-align: center; 
+            max-width: 800px; 
+            margin: 0 auto; 
+            transition: opacity 0.3s ease; 
+        }
         #novel-cover-view.active { display: flex; }
         #novel-cover-view h1 { font-family: var(--font-editor); font-size: 3.5rem; font-weight: 700; color: var(--text-main); margin-bottom: 20px; letter-spacing: 0.02em; }
         #novel-cover-view h2 { font-family: var(--font-ui); font-size: 1.2rem; font-weight: 400; color: var(--text-muted); margin-bottom: 40px; }
         #novel-cover-view p.synopsis { font-family: var(--font-editor); font-size: 1.1rem; line-height: 1.8; color: #a0aab5; margin-bottom: 50px; max-width: 600px; }
         #novel-index { width: 100%; max-width: 500px; text-align: left; margin-bottom: 40px; border: 1px solid var(--glass-border); border-radius: 8px; padding: 20px; background: rgba(0,0,0,0.2); }
         #novel-index h3 { font-family: var(--font-ui); font-size: 1.1rem; color: var(--accent); margin-top: 0; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px; }
-        #novel-index ul { list-style: none; padding: 0; margin: 0; }
+        #novel-index ul { list-style: none; padding: 0; margin: 0; max-height: 35vh; overflow-y: auto; padding-right: 5px; }
+        #novel-index ul::-webkit-scrollbar-track { background: rgba(255,255,255,0.02); }
+        #novel-index ul::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 4px; }
         #novel-index li { padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
         #novel-index li:last-child { border-bottom: none; }
         #novel-index li a { color: #a0aab5; text-decoration: none; font-size: 0.95rem; display: block; transition: color 0.2s, background 0.2s; padding: 4px 8px; border-radius: 4px; }
@@ -424,7 +451,7 @@
             position: absolute;
             top: 50%; left: 50%;
             transform: translate(-50%, -50%);
-            width: 250px; height: 250px;
+            width: 200px; height: 200px;
             border-radius: 50%;
             box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.7);
             border: 2px solid var(--accent);
@@ -437,20 +464,26 @@
         }
 
         #main-pfp-display {
-            position: absolute;
-            top: 50px;    
-            left: 50px;   
-            width: 200px; 
-            height: 200px;
-            border-radius: 8px; 
-            border: 1px solid var(--glass-border);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.6); 
-            overflow: hidden;
-            display: none; 
-            z-index: 5;
-            pointer-events: none; 
-            opacity: 0; 
-            animation: fadeInPfp 0.5s forwards;
+    position: absolute;
+    top: 50px;    
+    left: 50px;
+    width: clamp(130px, 8vw, 250px);
+    aspect-ratio: 1 / 1; 
+    height: auto; 
+    border-radius: 8px; 
+    border: 1px solid var(--glass-border);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.6); 
+    overflow: hidden;
+    display: none; 
+    z-index: 5;
+    pointer-events: auto !important;
+    cursor: zoom-in;
+    transition: transform 0.2s ease, opacity 0.3s;
+    animation: fadeInPfp 0.5s forwards;
+}
+
+        #main-pfp-display:hover {
+            transform: scale(1.02); 
         }
 
         #main-pfp-display img {
@@ -459,10 +492,107 @@
             object-fit: cover;
         }
 
-        @keyframes fadeInPfp { to { opacity: 1; } }
-        @media (max-width: 1300px) {
-            #main-pfp-display { display: none !important; }
+        #pfp-lightbox {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.85); 
+            backdrop-filter: blur(5px); 
+            z-index: 9999; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            cursor: zoom-out;
         }
+
+        #pfp-lightbox.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        #pfp-lightbox img {
+    width: clamp(260px, 16vw, 500px);
+    height: auto;
+    max-width: 90vw; 
+    max-height: 85vh;
+    border-radius: 8px;
+    box-shadow: 0 0 50px rgba(0,0,0,0.5);
+    transform: scale(0.9);
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+        #pfp-lightbox.active img {
+            transform: scale(1);
+        }
+
+        @keyframes fadeInPfp { to { opacity: 1; } }
+
+#novel-total-stats {
+    margin-top: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 25px;
+    font-family: var(--font-ui);
+    background: rgba(255, 255, 255, 0.03);
+    padding: 10px 25px;
+    border-radius: 50px;
+    border: 1px solid var(--glass-border);
+    animation: fadeIn 0.5s ease;
+}
+
+#novel-total-stats span {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.95rem;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+#novel-total-stats span i {
+    color: var(--accent);
+    font-size: 1rem;
+}
+
+
+@media (max-width: 1024px) {
+    .app-container {
+        grid-template-columns: 200px 1fr; 
+    }
+    
+    main {
+        padding: 30px 20px; 
+    }
+    
+    #novel-cover-view h1 {
+        font-size: 2.5rem; 
+    }
+}
+
+@media (max-width: 768px) {
+    .app-container {
+        grid-template-columns: 0px 1fr;
+        width: 100vw;
+        height: 100vh;
+        border-radius: 0; 
+    }
+
+    .status-bar {
+        bottom: 10px;
+        right: 10px;
+    }
+
+    #main-pfp-display {
+        top: 10px;
+        left: 10px;
+    }
+}
     </style>
 </head>
 <body>
@@ -479,7 +609,7 @@
                     <button class="btn-icon" onclick="promptCreateFolder()" title="New Folder"><i class="fas fa-folder-plus"></i></button>
                     <button class="btn-icon" onclick="createFile()" title="New File"><i class="fas fa-file-medical"></i></button>
                     <button class="btn-icon" onclick="toggleGraphView()" title="Graph View"><i class="fas fa-project-diagram"></i></button>
-                    <span style="width:1px; background:var(--glass-border); margin:0 4px;"></span> <!-- Separador visual -->
+                    <span style="width:1px; background:var(--glass-border); margin:0 4px;"></span>
                     <button class="btn-icon" onclick="downloadBackup()" title="Download Backup"><i class="fas fa-download"></i></button>
                     <button class="btn-icon" onclick="triggerImport()" title="Load Backup"><i class="fas fa-upload"></i></button>
                 </div>
@@ -506,6 +636,7 @@
                     <button class="btn-family" onclick="addChapterToNovel()"><i class="fas fa-plus"></i> Add Chapter</button>
                     <button class="btn-family" onclick="editNovelMetadata()"><i class="fas fa-edit"></i> Edit Novel Info</button>
                 </div>
+                <div id="novel-total-stats"></div>
             </div>
 
             <div class="editor-header">
@@ -589,6 +720,10 @@
         <div id="ctx-rename-btn" class="ctx-item" onclick="promptRename()"><i class="fas fa-edit" style="margin-right:8px"></i> Rename</div>
         <div id="ctx-delete-btn" class="ctx-item delete" onclick="promptDelete()"><i class="fas fa-trash" style="margin-right:8px"></i> Delete</div>
     </div>
+
+    <div id="pfp-lightbox" onclick="closePfpLightbox()">
+    <img id="pfp-lightbox-img" src="" alt="Full size">
+</div>
 
     <script>
         let projects = JSON.parse(localStorage.getItem('writerApp_projects')) || ['Default Project'];
@@ -1790,6 +1925,12 @@ ${cleanContent}
 
                 const familyBtn = document.getElementById('family-btn');
 
+                const pfpDisplay = document.getElementById('main-pfp-display');
+                 if (pfpDisplay) {
+                     pfpDisplay.style.display = 'none';
+                     pfpDisplay.innerHTML = '';
+                }
+
                 document.querySelector('.editor-header').style.display = 'none';
                 editorDiv.style.display = 'none';
                 relTagsDiv.style.display = 'none';
@@ -1811,6 +1952,7 @@ ${cleanContent}
                         novelCoverAuthor.innerText = file.author ? `By ${file.author}` : '';
                         novelCoverSynopsis.innerText = file.synopsis || 'No synopsis provided yet. Click "Edit Novel Info" to add one.';
                         renderNovelIndex(file.id);
+                        calculateNovelStats(file.id);
                     } else { 
                         currentNovelId = file.parentId && fileSystem.find(f => f.id === file.parentId)?.type === 'novel' ? file.parentId : null;
 
@@ -1826,13 +1968,18 @@ ${cleanContent}
                         updateStats(); 
 
                         const pfpDisplay = document.getElementById('main-pfp-display');
-                        if (file.image) {
-                            pfpDisplay.innerHTML = `<img src="${file.image}">`;
-                            pfpDisplay.style.display = 'block';
-                        } else {
-                            pfpDisplay.style.display = 'none';
-                            pfpDisplay.innerHTML = '';
-                        }
+    if (file.image) {
+        pfpDisplay.innerHTML = `<img src="${file.image}">`;
+        pfpDisplay.style.display = 'block';
+        
+        pfpDisplay.onclick = function() {
+            openPfpLightbox(file.image);
+        };
+    } else {
+        pfpDisplay.style.display = 'none';
+        pfpDisplay.innerHTML = '';
+        pfpDisplay.onclick = null;
+    }
 
                         if (file.type === 'chapter') {
                             chapterNavigation.classList.add('active');
@@ -2555,6 +2702,61 @@ ${cleanContent}
                 showToast("Image removed");
             };
         }
+
+function calculateNovelStats(novelId) {
+    const statsContainer = document.getElementById('novel-total-stats');
+    if (!statsContainer) return;
+
+    const chapters = fileSystem.filter(f => f.parentId === novelId && f.type === 'chapter');
+    
+    let totalWords = 0;
+
+    chapters.forEach(chap => {
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = chap.content || "";
+        const text = tempDiv.innerText || "";
+        const count = text.trim() === '' ? 0 : text.trim().split(/\s+/).length;
+        totalWords += count;
+    });
+
+    const timeMinutes = Math.ceil(totalWords / 200);
+    let timeString = timeMinutes + " min";
+    
+    if (timeMinutes >= 60) {
+        const hours = Math.floor(timeMinutes / 60);
+        const mins = timeMinutes % 60;
+        timeString = `${hours}h ${mins}m`;
+    }
+
+    statsContainer.innerHTML = `
+        <span title="Total Words"><i class="fas fa-pen-nib"></i> ${totalWords.toLocaleString()} words</span>
+        <span style="width:1px; height:15px; background:var(--glass-border);"></span>
+        <span title="Est. Reading Time"><i class="fas fa-clock"></i> ${timeString} read</span>
+    `;
+}
+
+function openPfpLightbox(imgSrc) {
+    const lightbox = document.getElementById('pfp-lightbox');
+    const lightboxImg = document.getElementById('pfp-lightbox-img');
+    
+    lightboxImg.src = imgSrc;
+    lightbox.classList.add('active');
+}
+
+function closePfpLightbox() {
+    const lightbox = document.getElementById('pfp-lightbox');
+    lightbox.classList.remove('active');
+    
+    setTimeout(() => {
+        document.getElementById('pfp-lightbox-img').src = '';
+    }, 300);
+}
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        closePfpLightbox();
+    }
+});
     </script>
 </body>
 </html>
