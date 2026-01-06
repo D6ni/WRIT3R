@@ -395,6 +395,74 @@
             color: #fff; font-family: sans-serif; z-index: 200;
             flex-direction: column; gap: 15px;
         }
+
+        .pfp-preview-container { width: 120px; height: 120px; margin: 10px auto; border-radius: 50%; border: 2px dashed var(--accent); overflow: hidden; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.2); position: relative; cursor: pointer; }
+        .pfp-preview-container img { width: 100%; height: 100%; object-fit: cover; }
+        .pfp-preview-container:hover::after { content: 'Change'; position: absolute; background: rgba(0,0,0,0.6); color: white; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; }
+
+        .crop-container {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            margin: 0 auto 15px auto;
+            background: #000;
+            overflow: hidden;
+            border-radius: 8px;
+            border: 1px solid var(--glass-border);
+            cursor: grab;
+        }
+        .crop-container:active { cursor: grabbing; }
+        .crop-overlay {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none; 
+            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.7);
+            border-radius: 50%;
+        }
+        .crop-mask-wrapper {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 250px; height: 250px;
+            border-radius: 50%;
+            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.7);
+            border: 2px solid var(--accent);
+            pointer-events: none;
+        }
+        .zoom-slider {
+            width: 100%;
+            margin: 10px 0;
+            accent-color: var(--accent);
+        }
+
+        #main-pfp-display {
+            position: absolute;
+            top: 50px;    
+            left: 50px;   
+            width: 200px; 
+            height: 200px;
+            border-radius: 8px; 
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6); 
+            overflow: hidden;
+            display: none; 
+            z-index: 5;
+            pointer-events: none; 
+            opacity: 0; 
+            animation: fadeInPfp 0.5s forwards;
+        }
+
+        #main-pfp-display img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        @keyframes fadeInPfp { to { opacity: 1; } }
+        @media (max-width: 1300px) {
+            #main-pfp-display { display: none !important; }
+        }
     </style>
 </head>
 <body>
@@ -422,6 +490,7 @@
         </aside>
 
         <main>
+            <div id="main-pfp-display"></div>
             <button id="exit-zen-btn" onclick="toggleZenMode()" title="Exit Zen Mode"><i class="fas fa-compress-alt"></i></button>
 
             <div id="novel-cover-view">
@@ -443,6 +512,7 @@
                 <div class="header-top-row">
                     <input type="text" id="doc-title" placeholder="Untitled" oninput="updateCurrentFile()">
                     <div class="header-actions">
+                        <button class="btn-family" onclick="openImageModal()" title="Set Node Image"><i class="fas fa-image"></i></button>
                         <button id="family-btn" class="btn-family" onclick="openFamilyModal()"><i class="fas fa-users"></i> Family</button>
                         <button class="btn-family" onclick="toggleZenMode()"><i class="fas fa-expand-alt"></i> Zen</button>
                     </div>
@@ -1051,22 +1121,28 @@
 
             fileSystem.forEach(f => {
                 if(f.type === 'file') {
+                    let imgObj = null;
+                    if (f.image) {
+                        imgObj = new Image();
+                        imgObj.src = f.image;
+                    }
+
                     nodes.push({
                         id: f.id,
                         name: f.name,
                         x: (Math.random() - 0.5) * (canvas.width * 0.5),
                         y: (Math.random() - 0.5) * (canvas.height * 0.5),
                         vx: 0, vy: 0,
-                        radius: 5, 
+                        radius: f.image ? 15 : 5,
                         connections: 0,
-                        color: accentColor 
+                        color: accentColor,
+                        imgObj: imgObj
                     });
                 }
             });
 
             fileSystem.forEach(f => {
                 if (f.type !== 'file') return;
-
                 if (f.relationships) {
                     f.relationships.forEach(r => { 
                         links.push({ source: f.id, target: r.targetId }); 
@@ -1074,7 +1150,6 @@
                         incrementConnections(r.targetId);
                     });
                 }
-
                 const regex = /data-id="([^"]+)"/g;
                 let match;
                 while ((match = regex.exec(f.content)) !== null) {
@@ -1085,7 +1160,11 @@
             });
 
             nodes.forEach(n => {
-                n.radius = 5 + (Math.log(n.connections + 1) * 6);
+                if (!n.imgObj) {
+                    n.radius = 5 + (Math.log(n.connections + 1) * 6);
+                } else {
+                    n.radius = 25 + (Math.log(n.connections + 1) * 3);
+                }
             });
 
             function incrementConnections(id) {
@@ -1167,15 +1246,34 @@
             });
 
             nodes.forEach(n => {
-                ctx.shadowBlur = 10; ctx.shadowColor = n.color;
-                ctx.fillStyle = n.color;
-                ctx.beginPath(); ctx.arc(n.x, n.y, n.radius / graphScale, 0, Math.PI*2); ctx.fill();
+                ctx.save();
+                ctx.shadowBlur = 10; 
+                ctx.shadowColor = n.color;
+
+                ctx.beginPath(); 
+                ctx.arc(n.x, n.y, n.radius, 0, Math.PI*2); 
+                
+                if (n.imgObj && n.imgObj.complete) {
+                    ctx.save();
+                    ctx.clip(); 
+                    ctx.drawImage(n.imgObj, n.x - n.radius, n.y - n.radius, n.radius*2, n.radius*2);
+                    ctx.restore();
+                    
+                    ctx.strokeStyle = n.color;
+                    ctx.lineWidth = 2; 
+                    ctx.stroke();
+                } else {
+                    ctx.fillStyle = n.color;
+                    ctx.fill();
+                }
+
+                ctx.restore();
+
                 ctx.shadowBlur = 0;
                 ctx.fillStyle = '#c9d1d9'; 
-                let fontSize = Math.max(8, 12 / graphScale); 
-                ctx.font = `${fontSize}px var(--font-ui)`; 
+                ctx.font = `12px var(--font-ui)`; 
                 ctx.textAlign = 'center'; 
-                ctx.fillText(n.name, n.x, n.y + (n.radius/graphScale) + 12);
+                ctx.fillText(n.name, n.x, n.y + n.radius + 14);
             });
 
             ctx.restore();
@@ -1296,7 +1394,11 @@
             return { inputEl };
         }
 
-        function closeModal() { modalEl.style.display = 'none'; }
+        function closeModal() {
+            modalEl.style.display = 'none';
+            const actionsFooter = document.querySelector('.modal-actions');
+            if (actionsFooter) actionsFooter.style.display = 'flex';
+        }
         function showToast(msg, isError = false) {
             const toast = document.getElementById('toast');
             toast.innerHTML = `<i class="fas ${isError ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i> <span>${msg}</span>`;
@@ -1722,6 +1824,15 @@ ${cleanContent}
                         titleInput.placeholder = "Untitled"; 
                         renderRelationships(file);
                         updateStats(); 
+
+                        const pfpDisplay = document.getElementById('main-pfp-display');
+                        if (file.image) {
+                            pfpDisplay.innerHTML = `<img src="${file.image}">`;
+                            pfpDisplay.style.display = 'block';
+                        } else {
+                            pfpDisplay.style.display = 'none';
+                            pfpDisplay.innerHTML = '';
+                        }
 
                         if (file.type === 'chapter') {
                             chapterNavigation.classList.add('active');
@@ -2270,6 +2381,180 @@ ${cleanContent}
         
         input.value = '';
     }
+
+    function openImageModal() {
+            if (!currentFileId) return;
+            const file = fileSystem.find(f => f.id === currentFileId);
+            if (!file) return;
+
+            let img = null;
+            let scale = 1;
+            let posX = 0, posY = 0;
+            let isDragging = false;
+            let startX, startY;
+            const CANVAS_SIZE = 300;
+            const CROP_SIZE = 200;
+
+            const html = `
+                <div id="upload-view" style="text-align:center; ${file.image ? 'display:none' : ''}">
+                    <div class="pfp-preview-container" onclick="document.getElementById('pfp-input').click()" style="width:150px; height:150px; border-width:2px;">
+                        <i class="fas fa-camera" style="font-size:2rem; opacity:0.5;"></i>
+                    </div>
+                    <p style="font-size:0.9rem; color:var(--text-muted); margin-top:10px;">Click to upload image</p>
+                    <button class="btn btn-cancel" onclick="closeModal()" style="margin-top:15px;">Cancel</button>
+                </div>
+
+                <div id="editor-view" style="display:none; flex-direction:column; align-items:center;">
+                    <div class="crop-container" id="crop-container">
+                        <canvas id="editor-canvas" width="${CANVAS_SIZE}" height="${CANVAS_SIZE}"></canvas>
+                        <div class="crop-mask-wrapper"></div>
+                    </div>
+                    <div style="width: 300px; display:flex; gap:10px; align-items:center;">
+                        <i class="fas fa-search-minus" style="font-size:0.8rem; color:var(--text-muted)"></i>
+                        <input type="range" id="zoom-slider" class="zoom-slider" min="0.1" max="3" step="0.05" value="1">
+                        <i class="fas fa-search-plus" style="font-size:0.8rem; color:var(--text-muted)"></i>
+                    </div>
+                    <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:10px;">Drag to pan, slider to zoom</p>
+                    <div style="display:flex; gap:10px;">
+                        <button class="btn btn-cancel" onclick="resetUpload()">Change File</button>
+                        <button class="btn btn-confirm" onclick="saveCrop()">Save PFP</button>
+                    </div>
+                </div>
+
+                <div id="current-view" style="text-align:center; ${file.image ? '' : 'display:none'}">
+                     <div class="pfp-preview-container" style="width:180px; height:180px; border: 3px solid var(--accent); cursor:default;">
+                        <img src="${file.image}" style="width:100%; height:100%;">
+                    </div>
+                    <div style="margin-top:20px; display:flex; gap:10px; justify-content:center;">
+                         <button class="btn btn-confirm" onclick="document.getElementById('pfp-input').click()">Upload New</button>
+                         <button class="btn btn-danger" onclick="removePfp()">Remove</button>
+                    </div>
+                    <button class="btn btn-cancel" onclick="closeModal()" style="margin-top:15px;">Close</button>
+                </div>
+
+                <input type="file" id="pfp-input" accept="image/*" style="display:none">
+            `;
+
+            openModal({
+                title: 'Set Node Image',
+                type: 'custom',
+                customHTML: html
+            });
+
+            document.querySelector('.modal-actions').style.display = 'none';
+
+            const uploadView = document.getElementById('upload-view');
+            const editorView = document.getElementById('editor-view');
+            const currentView = document.getElementById('current-view');
+            const canvas = document.getElementById('editor-canvas');
+            const ctx = canvas.getContext('2d');
+            const slider = document.getElementById('zoom-slider');
+            const container = document.getElementById('crop-container');
+
+            document.getElementById('pfp-input').onchange = (e) => {
+                const imgFile = e.target.files[0];
+                if (!imgFile) return;
+                
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    img = new Image();
+                    img.onload = () => {
+                        uploadView.style.display = 'none';
+                        currentView.style.display = 'none';
+                        editorView.style.display = 'flex';
+                        
+                        const minScale = Math.max(CANVAS_SIZE / img.width, CANVAS_SIZE / img.height);
+                        scale = minScale;
+                        slider.min = minScale * 0.5;
+                        slider.max = minScale * 3;
+                        slider.value = scale;
+                        
+                        posX = (CANVAS_SIZE - img.width * scale) / 2;
+                        posY = (CANVAS_SIZE - img.height * scale) / 2;
+                        
+                        draw();
+                    };
+                    img.src = event.target.result;
+                };
+                reader.readAsDataURL(imgFile);
+                e.target.value = '';
+            };
+
+            function draw() {
+                if (!img) return;
+                ctx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+                ctx.fillStyle = '#000';
+                ctx.fillRect(0,0, CANVAS_SIZE, CANVAS_SIZE);
+                ctx.drawImage(img, posX, posY, img.width * scale, img.height * scale);
+            }
+
+            container.addEventListener('mousedown', e => { isDragging = true; startX = e.clientX - posX; startY = e.clientY - posY; });
+            window.addEventListener('mouseup', () => isDragging = false);
+            window.addEventListener('mousemove', e => {
+                if (!isDragging) return;
+                e.preventDefault();
+                posX = e.clientX - startX;
+                posY = e.clientY - startY;
+                draw();
+            });
+
+            slider.addEventListener('input', e => {
+                const newScale = parseFloat(e.target.value);
+                const centerX = (CANVAS_SIZE / 2 - posX) / scale;
+                const centerY = (CANVAS_SIZE / 2 - posY) / scale;
+                scale = newScale;
+                posX = CANVAS_SIZE / 2 - centerX * scale;
+                posY = CANVAS_SIZE / 2 - centerY * scale;
+                draw();
+            });
+
+            window.saveCrop = () => {
+                if (!img) return;
+                
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = CROP_SIZE;
+                tempCanvas.height = CROP_SIZE;
+                const tCtx = tempCanvas.getContext('2d');
+
+                const editorCenterOffset = (CANVAS_SIZE - CROP_SIZE) / 2;
+                const drawX = (editorCenterOffset - posX) / scale;
+                const drawY = (editorCenterOffset - posY) / scale;
+                const drawW = CROP_SIZE / scale;
+                const drawH = CROP_SIZE / scale;
+
+                tCtx.drawImage(img, drawX, drawY, drawW, drawH, 0, 0, CROP_SIZE, CROP_SIZE);
+
+                file.image = tempCanvas.toDataURL('image/jpeg', 0.9);
+                saveData();
+
+                const pfpDisplay = document.getElementById('main-pfp-display');
+                if (pfpDisplay) {
+                    pfpDisplay.innerHTML = `<img src="${file.image}">`;
+                    pfpDisplay.style.display = 'block';
+                }
+                
+                if(graphView.classList.contains('active')) { initGraph(); }
+                
+                closeModal();
+                showToast("PFP Saved successfully");
+            };
+
+            window.resetUpload = () => {
+                img = null;
+                editorView.style.display = 'none';
+                uploadView.style.display = 'block';
+            };
+
+            window.removePfp = () => {
+                delete file.image;
+                saveData();
+                const pfpDisplay = document.getElementById('main-pfp-display');
+                if (pfpDisplay) pfpDisplay.style.display = 'none';
+                if(graphView.classList.contains('active')) initGraph();
+                openImageModal();
+                showToast("Image removed");
+            };
+        }
     </script>
 </body>
 </html>
