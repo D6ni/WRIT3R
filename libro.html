@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WRIT3R - Reader Mode</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,700;1,400;1,500&family=Cinzel:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/page-flip/dist/js/page-flip.browser.js"></script>
+
+    <style>
+        :root {
+            --bg-color: #111;
+            --page-bg: #faf8f4;
+            --page-bg-alt: #f5f3ef;
+            --text-color: #1e1e1e;
+            --cover-bg: #18202c;
+            --cover-text: #eee;
+            --accent: #c9a84c;
+            --rule-color: #d8d2c8;
+
+            /* ── These must match PageFlip config exactly ── */
+            --pf-w: 520px;
+            --pf-h: 780px;
+
+            /* ── Page inner padding ── */
+            --pad-top: 52px;
+            --pad-side: 62px;
+            --pad-bottom: 44px;
+
+            /* ── Fixed chrome heights (header + footer blocks) ── */
+            --chrome-h: 88px;   /* ~44px header + ~44px footer */
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0; padding: 0;
+            height: 100vh; width: 100vw;
+            background: radial-gradient(ellipse at 50% 40%, #222 0%, #0a0a0a 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .book-stage {
+            width: 92vw;
+            height: 88vh;
+            max-width: 1240px;
+            max-height: 840px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* ══════════════════════════════════
+           PAGE BASE
+        ══════════════════════════════════ */
+        .page {
+            background-color: var(--page-bg);
+            overflow: hidden;
+            display: none;
+            position: relative;
+        }
+
+        /* ══════════════════════════════════
+           COVER
+        ══════════════════════════════════ */
+        .page-cover {
+            background-color: var(--cover-bg);
+            color: var(--cover-text);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .cover-front {
+            /* subtle linen texture */
+            background-image:
+                repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,.015) 2px, rgba(255,255,255,.015) 4px),
+                repeating-linear-gradient(90deg, transparent, transparent 3px, rgba(255,255,255,.01) 3px, rgba(255,255,255,.01) 6px);
+        }
+
+        .cover-title {
+            font-family: 'Cinzel', serif;
+            font-size: clamp(1.7rem, 3.5vw, 3rem);
+            font-weight: 600;
+            color: var(--accent);
+            letter-spacing: 2px;
+            line-height: 1.25;
+            text-transform: uppercase;
+            padding: 0 50px;
+            margin: 0 0 12px 0;
+        }
+
+        .cover-author {
+            font-family: 'EB Garamond', serif;
+            font-size: clamp(0.9rem, 1.4vw, 1.15rem);
+            font-weight: 400;
+            font-style: italic;
+            letter-spacing: 3px;
+            opacity: 0.75;
+            margin: 0;
+        }
+
+        .cover-ornament {
+            font-size: clamp(1.6rem, 2.5vw, 2.4rem);
+            color: var(--accent);
+            opacity: 0.55;
+            margin: 28px 0;
+        }
+
+        .cover-rule {
+            width: 55px; height: 1px;
+            background: var(--accent);
+            opacity: 0.6;
+            margin: 18px auto;
+        }
+
+        .cover-back {
+            background-color: #141c26;
+        }
+
+        /* ══════════════════════════════════
+           CONTENT PAGE LAYOUT
+        ══════════════════════════════════ */
+        .page-content {
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            padding: var(--pad-top) var(--pad-side) var(--pad-bottom);
+        }
+
+        /* Running header */
+        .page-header {
+            flex-shrink: 0;
+            font-family: 'EB Garamond', serif;
+            font-size: 0.68rem;
+            font-style: italic;
+            color: #a09888;
+            text-align: center;
+            letter-spacing: 0.5px;
+            padding-bottom: 9px;
+            border-bottom: 1px solid var(--rule-color);
+            margin-bottom: 20px;
+        }
+
+        /* Text body */
+        .page-body {
+            flex: 1;
+            overflow: hidden;
+            font-family: 'EB Garamond', serif;
+            font-size: 1.045rem;
+            line-height: 1.82;
+            text-align: justify;
+            hyphens: auto;
+            -webkit-hyphens: auto;
+            color: var(--text-color);
+        }
+
+        /* Folio */
+        .page-footer {
+            flex-shrink: 0;
+            font-family: 'Cinzel', serif;
+            font-size: 0.62rem;
+            color: #b0a898;
+            text-align: center;
+            letter-spacing: 1px;
+            padding-top: 9px;
+            border-top: 1px solid var(--rule-color);
+            margin-top: 14px;
+        }
+
+        /* ══════════════════════════════════
+           TYPOGRAPHY
+        ══════════════════════════════════ */
+        .page-body p {
+            margin: 0;
+            text-indent: 1.6em;
+        }
+
+        /* No indent after block-level breaks */
+        .page-body p.no-indent { text-indent: 0; }
+
+        /* Section breaks */
+        .page-body .scene-break {
+            text-align: center;
+            color: var(--accent);
+            opacity: 0.5;
+            margin: 0.6em 0;
+            font-size: 0.8rem;
+            letter-spacing: 6px;
+            text-indent: 0;
+        }
+
+        /* Drop cap — first paragraph of each chapter */
+        .page-body p.drop-cap {
+            text-indent: 0;
+        }
+        .page-body p.drop-cap::first-letter {
+            font-family: 'Cinzel', serif;
+            font-size: 3.6em;
+            font-weight: 700;
+            float: left;
+            line-height: 0.72;
+            margin: 8px 5px 0 0;
+            color: #1e1e1e;
+        }
+
+        /* Chapter header (inside page-body) */
+        .chapter-header {
+            text-align: center;
+            padding: 28px 0 22px;
+        }
+        .chapter-header .ch-ornament {
+            display: block;
+            font-size: 1.2rem;
+            color: var(--accent);
+            opacity: 0.5;
+            margin-bottom: 14px;
+            letter-spacing: 4px;
+        }
+        .chapter-header .ch-label {
+            font-family: 'Cinzel', serif;
+            font-size: 0.6rem;
+            letter-spacing: 5px;
+            color: #aaa;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+        .chapter-header .ch-title {
+            font-family: 'Cinzel', serif;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1a1a1a;
+            line-height: 1.3;
+        }
+        .chapter-header .ch-rule {
+            width: 32px; height: 1px;
+            background: #bbb;
+            margin: 14px auto 0;
+        }
+
+        /* ══════════════════════════════════
+           HALF-TITLE / TITLE PAGE
+        ══════════════════════════════════ */
+        .title-page-inner {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            gap: 10px;
+        }
+        .title-page-title {
+            font-family: 'Cinzel', serif;
+            font-size: 1.6rem;
+            font-weight: 600;
+            color: #1a1a1a;
+            line-height: 1.3;
+        }
+        .title-page-rule {
+            width: 32px; height: 1px;
+            background: #bbb;
+            margin: 6px auto;
+        }
+        .title-page-author {
+            font-family: 'EB Garamond', serif;
+            font-size: 0.95rem;
+            font-style: italic;
+            color: #888;
+            letter-spacing: 2px;
+        }
+        .title-page-colophon {
+            font-size: 0.58rem;
+            color: #bbb;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            padding-bottom: 8px;
+            font-family: 'Cinzel', serif;
+        }
+
+        /* ══════════════════════════════════
+           TABLE OF CONTENTS
+        ══════════════════════════════════ */
+        .toc-heading {
+            font-family: 'Cinzel', serif;
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-align: center;
+            color: #1a1a1a;
+            letter-spacing: 2px;
+            margin: 0 0 20px 0;
+        }
+        .toc-list { list-style: none; padding: 0; margin: 0; }
+        .toc-item {
+            display: flex;
+            align-items: baseline;
+            padding: 7px 4px;
+            border-bottom: 1px solid #e8e4de;
+            font-family: 'EB Garamond', serif;
+            font-size: 0.95rem;
+            color: var(--text-color);
+            cursor: pointer;
+            transition: color 0.15s, padding-left 0.15s;
+            user-select: none;
+            /* Critical: prevent click from reaching PageFlip */
+            pointer-events: all;
+        }
+        .toc-item:hover { color: #8a6010; padding-left: 6px; }
+        .toc-ch-num {
+            font-family: 'Cinzel', serif;
+            font-size: 0.6rem;
+            color: #aaa;
+            letter-spacing: 2px;
+            margin-right: 10px;
+            flex-shrink: 0;
+        }
+        .toc-ch-name { flex: 1; }
+        .toc-dots {
+            border-bottom: 1px dotted #ccc;
+            flex: 0 0 50px;
+            margin: 0 8px;
+            align-self: flex-end;
+            margin-bottom: 4px;
+        }
+        .toc-pg {
+            font-family: 'Cinzel', serif;
+            font-size: 0.65rem;
+            color: #999;
+            flex-shrink: 0;
+        }
+
+        /* ══════════════════════════════════
+           CONTROLS
+        ══════════════════════════════════ */
+        .controls {
+            position: fixed;
+            bottom: 22px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            z-index: 1000;
+            background: rgba(10, 10, 10, 0.9);
+            padding: 8px 22px;
+            border-radius: 50px;
+            box-shadow: 0 4px 24px rgba(0,0,0,.7);
+            border: 1px solid rgba(255,255,255,.1);
+        }
+        .btn {
+            background: none; border: none;
+            color: #999; font-size: 1rem;
+            cursor: pointer; transition: 0.18s;
+            display: flex; align-items: center;
+            padding: 4px 10px;
+            border-radius: 20px;
+        }
+        .btn:hover { color: var(--accent); background: rgba(255,255,255,.05); }
+        .btn-divider {
+            width: 1px; height: 18px;
+            background: rgba(255,255,255,.1);
+            margin: 0 4px;
+        }
+
+        /* ══════════════════════════════════
+           LOADER
+        ══════════════════════════════════ */
+        .loader {
+            position: fixed; inset: 0;
+            background: #111;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #fff;
+            z-index: 200;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .loader-label {
+            font-family: 'Cinzel', serif;
+            font-size: 0.7rem;
+            letter-spacing: 4px;
+            color: #666;
+            text-transform: uppercase;
+        }
+
+        /* ══════════════════════════════════
+           PROBE (invisible measuring div)
+        ══════════════════════════════════ */
+        #probe-host {
+            position: fixed;
+            left: -9999px; top: 0;
+            visibility: hidden;
+            pointer-events: none;
+            z-index: -1;
+        }
+    </style>
+</head>
+<body>
+
+<div id="loader" class="loader">
+    <i class="fas fa-circle-notch fa-spin" style="color:var(--accent); font-size:1.5rem;"></i>
+    <div class="loader-label">Composing pages&hellip;</div>
+</div>
+
+<div id="probe-host"></div>
+
+<div class="book-stage">
+    <div id="book"></div>
+</div>
+
+<div class="controls">
+    <button class="btn" title="Previous" onclick="book.flipPrev()">
+        <i class="fas fa-chevron-left"></i>
+    </button>
+    <div class="btn-divider"></div>
+    <button class="btn" title="Reload" onclick="location.reload()" style="font-size:0.8rem;">
+        <i class="fas fa-redo"></i>
+    </button>
+    <div class="btn-divider"></div>
+    <button class="btn" title="Next" onclick="book.flipNext()">
+        <i class="fas fa-chevron-right"></i>
+    </button>
+</div>
+
+<script>
+'use strict';
+
+let book = null;
+
+// ─────────────────────────────────────────────
+//  ENTRY POINT
+// ─────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+    // Wait for fonts — critical for accurate text measurement
+    const ready = document.fonts ? document.fonts.ready : Promise.resolve();
+    ready.then(main).catch(main);
+});
+
+function main() {
+    const projectName = localStorage.getItem('writerApp_currentProject') || 'Default Project';
+    const rawData     = localStorage.getItem('writerApp_fs_' + projectName);
+
+    if (!rawData) {
+        setLoaderError('No project data found.<br>Please open from the main app.');
+        return;
+    }
+
+    try {
+        const fs      = JSON.parse(rawData);
+        const novel   = fs.find(f => f.type === 'novel') || { name: 'Untitled', author: '', id: 'root' };
+        let chapters  = fs.filter(f => f.type === 'chapter' && f.parentId === novel.id);
+        if (!chapters.length) chapters = fs.filter(f => f.type === 'chapter' || f.type === 'file');
+        chapters.sort((a, b) => (a.order || 0) - (b.order || 0));
+
+        const title  = novel.novelTitle || novel.name || 'Untitled';
+        const author = novel.author || '';
+
+        buildBook(title, author, chapters);
+    } catch (err) {
+        setLoaderError('Failed to parse project data.<br>' + err.message);
+    }
+}
+
+// ─────────────────────────────────────────────
+//  BUILD BOOK
+// ─────────────────────────────────────────────
+function buildBook(title, author, chapters) {
+
+    /* ── PageFlip base dimensions ──────────────────────────────────
+       These values are used both in new St.PageFlip() and in the
+       probe calculation.  Change them in ONE place only.           */
+    const PF_W = 520;
+    const PF_H = 780;
+
+    /* ── Compute available body height for the probe ──────────────
+       .page-content padding: 52px top, 44px bottom  → 96px
+       .page-header:  ~10px text + 9px padding-bottom + 1px border + 20px margin = 40px
+       .page-footer:  14px margin-top + 9px padding-top + 1px border + ~10px text = 34px
+       Total chrome:  96 + 40 + 34 = 170px
+       Available body height = PF_H - 170 = 610px                  */
+    const PAD_SIDE   = 62;   // must match --pad-side
+    const BODY_H     = PF_H - 170;   // = 610px  (conservative)
+    const PROBE_W    = PF_W - PAD_SIDE * 2;  // = 396px
+
+    /* ── Set up the invisible probe ────────────────────────────── */
+    const probe = document.createElement('div');
+    probe.style.cssText = [
+        `width:${PROBE_W}px`,
+        'font-family:"EB Garamond",serif',
+        'font-size:1.045rem',
+        'line-height:1.82',
+        'text-align:justify',
+        'hyphens:auto',
+        '-webkit-hyphens:auto',
+        'word-break:normal',
+        'position:absolute',
+        'white-space:normal',
+    ].join(';');
+    document.getElementById('probe-host').appendChild(probe);
+
+    /* ── Paginate each chapter ────────────────────────────────── */
+    // Front-matter page count: cover×2 + title×2 + toc×2 = 6
+    const FRONT = 6;
+    let globalIdx = FRONT;
+    const processed = [];
+
+    chapters.forEach((chap, ci) => {
+        const paragraphs = extractParagraphs(chap.content || '');
+        const pages      = paginateChapter(ci + 1, chap.name, paragraphs, probe, BODY_H);
+
+        processed.push({
+            number:     ci + 1,
+            title:      chap.name,
+            pages,
+            startIndex: globalIdx,
+        });
+        globalIdx += pages.length;
+    });
+
+    probe.remove();
+
+    /* ── Assemble HTML and init ───────────────────────────────── */
+    document.getElementById('book').innerHTML = assembleHTML(title, author, processed);
+    initFlipBook(PF_W, PF_H);
+}
+
+// ─────────────────────────────────────────────
+//  PARAGRAPH EXTRACTION
+//  Preserves inline HTML (bold, italic, etc.)
+// ─────────────────────────────────────────────
+function extractParagraphs(html) {
+    const div = document.createElement('div');
+    div.innerHTML = html;
+
+    // Treat <br><br> as paragraph breaks
+    div.innerHTML = div.innerHTML.replace(/<br\s*\/?>\s*<br\s*\/?>/gi, '</p><p>');
+
+    const nodes = div.querySelectorAll('p, h1, h2, h3, h4, blockquote, li');
+    if (nodes.length > 0) {
+        return Array.from(nodes)
+            .map(n => n.innerHTML.trim())
+            .filter(s => s.length > 0);
+    }
+
+    // Fallback: plain text split by blank lines
+    return div.innerText.trim()
+        .split(/\n{2,}/)
+        .map(t => t.replace(/\n/g, ' ').trim())
+        .filter(Boolean);
+}
+
+// ─────────────────────────────────────────────
+//  DOM-BASED PAGINATION
+//  Measures actual rendered text height; far
+//  more accurate than character counting.
+// ─────────────────────────────────────────────
+function paginateChapter(chapNum, chapName, paragraphs, probe, bodyH) {
+    const pages = [];
+
+    // Chapter header block (only on page 1 of the chapter)
+    const chapHeaderHTML = `
+        <div class="chapter-header">
+            <span class="ch-ornament">· · ·</span>
+            <div class="ch-label">Chapter ${chapNum}</div>
+            <div class="ch-title">${escapeForDisplay(chapName)}</div>
+            <div class="ch-rule"></div>
+        </div>`;
+
+    let currentHTML  = chapHeaderHTML;
+    let isFirstPage  = true;
+    let isFirstPara  = true;   // drop-cap on the very first paragraph
+
+    function flushPage() {
+        if (currentHTML.trim()) {
+            pages.push({ html: currentHTML, isFirstPage });
+            isFirstPage = false;
+        }
+        currentHTML = '';
+    }
+
+    paragraphs.forEach(paraInner => {
+        // Decide CSS class for this paragraph
+        let cls = '';
+        if (isFirstPara) {
+            cls = 'drop-cap';
+            isFirstPara = false;
+        } else if (currentHTML === '') {
+            cls = 'no-indent';   // first para on a continuation page
+        }
+
+        const pTag = cls
+            ? `<p class="${cls}">${paraInner}</p>`
+            : `<p>${paraInner}</p>`;
+
+        // Measure: would adding this paragraph overflow?
+        probe.innerHTML = currentHTML + pTag;
+
+        if (probe.scrollHeight > bodyH && currentHTML !== '') {
+            // This paragraph doesn't fit — flush and start fresh
+            flushPage();
+            // Re-probe just this paragraph on the new page
+            const contPTag = `<p class="no-indent">${paraInner}</p>`;
+            probe.innerHTML = contPTag;
+
+            // Edge case: single paragraph taller than bodyH (very long para)
+            // Just accept it — it'll be clipped but won't infinite loop
+            currentHTML = contPTag;
+        } else {
+            currentHTML += pTag;
+        }
+    });
+
+    flushPage();   // flush whatever remains
+
+    // If the chapter had no content, add a blank page
+    if (pages.length === 0) {
+        pages.push({ html: chapHeaderHTML, isFirstPage: true });
+    }
+
+    return pages;
+}
+
+// ─────────────────────────────────────────────
+//  HTML ASSEMBLY
+// ─────────────────────────────────────────────
+function assembleHTML(title, author, chapters) {
+    let h = '';
+
+    /* ─── Cover spread (pages 0-1) ─── */
+    h += `
+    <div class="page page-cover cover-front">
+        <div class="cover-ornament"><i class="fas fa-feather-alt"></i></div>
+        <h1 class="cover-title">${escapeForDisplay(title)}</h1>
+        <div class="cover-rule"></div>
+        <p class="cover-author">${escapeForDisplay(author)}</p>
+    </div>
+    <div class="page page-cover cover-back"></div>`;
+
+    /* ─── Title page spread (pages 2-3) ─── */
+    h += `
+    <div class="page page-content">
+        <div class="title-page-inner">
+            <div class="title-page-title">${escapeForDisplay(title)}</div>
+            <div class="title-page-rule"></div>
+            <div class="title-page-author">${escapeForDisplay(author)}</div>
+        </div>
+        <div class="title-page-colophon">A WRIT3R Production</div>
+    </div>
+    <div class="page page-content"></div>`;
+
+    /* ─── Table of Contents spread (pages 4-5) ─── */
+    let tocRows = '';
+    chapters.forEach(ch => {
+        // Display page number: subtract the 5 front pages (0-indexed → +1 for display)
+        const displayPg = ch.startIndex - 5;
+        tocRows += `
+        <li class="toc-item"
+            onmousedown="absorbEvent(event)"
+            onmouseup="absorbEvent(event)"
+            ontouchstart="absorbEvent(event)"
+            onclick="absorbEvent(event); goToPage(${ch.startIndex})">
+            <span class="toc-ch-num">— ${ch.number}</span>
+            <span class="toc-ch-name">${escapeForDisplay(ch.title)}</span>
+            <span class="toc-dots"></span>
+            <span class="toc-pg">${displayPg}</span>
+        </li>`;
+    });
+
+    h += `
+    <div class="page page-content">
+        <div class="page-header">${escapeForDisplay(title)}</div>
+        <div class="page-body">
+            <h2 class="toc-heading">Contents</h2>
+            <ul class="toc-list">${tocRows}</ul>
+        </div>
+    </div>
+    <div class="page page-content"></div>`;
+
+    /* ─── Chapter pages ─── */
+    let folio = 1;
+    chapters.forEach(ch => {
+        ch.pages.forEach(pg => {
+            // Running header alternates: left=title, right=chapter name
+            const headerText = pg.isFirstPage
+                ? `Chapter ${ch.number}`
+                : escapeForDisplay(title);
+
+            h += `
+            <div class="page page-content">
+                <div class="page-header">${headerText}</div>
+                <div class="page-body">${pg.html}</div>
+                <div class="page-footer">${folio++}</div>
+            </div>`;
+        });
+    });
+
+    /* ─── Back matter ─── */
+    h += `
+    <div class="page page-content"></div>
+    <div class="page page-cover cover-back">
+        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:18px;">
+            <i class="fas fa-book-open" style="font-size:2.4rem;color:var(--accent);opacity:0.6;"></i>
+            <div style="font-family:'Cinzel',serif;letter-spacing:6px;font-size:0.72rem;color:var(--accent);opacity:0.55;text-transform:uppercase;">Fin</div>
+        </div>
+    </div>`;
+
+    return h;
+}
+
+// ─────────────────────────────────────────────
+//  PAGE-FLIP INITIALISATION
+// ─────────────────────────────────────────────
+function initFlipBook(w, h) {
+    const pf = new St.PageFlip(document.getElementById('book'), {
+        width:              w,
+        height:             h,
+        size:               'stretch',
+        minWidth:           280,
+        maxWidth:           800,
+        minHeight:          400,
+        maxHeight:          1100,
+        maxShadowOpacity:   0.45,
+        showCover:          true,
+        mobileScrollSupport: false,
+        usePortrait:        true,
+        flippingTime:       700,
+    });
+
+    pf.loadFromHTML(document.querySelectorAll('.page'));
+
+    // Reveal pages after initial render settles
+    setTimeout(() => {
+        document.getElementById('loader').style.display = 'none';
+        document.querySelectorAll('.page').forEach(p => p.style.display = 'block');
+    }, 650);
+
+    book = pf;
+}
+
+// ─────────────────────────────────────────────
+//  TOC NAVIGATION
+//  absorbEvent prevents PageFlip from seeing
+//  the click and turning an extra page.
+// ─────────────────────────────────────────────
+function absorbEvent(e) {
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+    // Don't preventDefault — allows our own onclick to fire
+}
+
+function goToPage(index) {
+    if (!book) return;
+    // Tiny delay lets the absorbed events fully clear before we flip
+    setTimeout(() => book.flip(index), 20);
+}
+
+// ─────────────────────────────────────────────
+//  HELPERS
+// ─────────────────────────────────────────────
+function escapeForDisplay(str) {
+    if (!str) return '';
+    return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+}
+
+function setLoaderError(msg) {
+    const el = document.getElementById('loader');
+    el.innerHTML = `<p style="color:#aaa;font-family:sans-serif;text-align:center;line-height:1.6;">${msg}</p>`;
+}
+</script>
+</body>
+</html>
