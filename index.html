@@ -289,7 +289,7 @@
 
         .page {
             background-color: var(--reader-page-bg);
-            padding: 5vh 5vw;
+            padding: 45px 50px; /* Padding fijo asegura precisión en el cálculo de texto */
             box-sizing: border-box;
             box-shadow: inset -3px 0 10px rgba(0,0,0,0.05);
             overflow: hidden;
@@ -340,9 +340,22 @@
         }
 
         .page-content {
-            font-size: clamp(0.95rem, 1.3vh, 1.2rem); 
-            line-height: 1.8;
+            font-size: clamp(0.9rem, 1.2vh, 1.15rem);
+            line-height: 1.7;
             text-align: justify;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .chapter-title-on-page {
+            font-family: 'Cinzel', serif;
+            font-size: 2rem;
+            text-align: center;
+            margin-top: 10px;
+            margin-bottom: 30px;
+            color: #000;
+            line-height: 1.2;
         }
 
         .page-header {
@@ -375,7 +388,34 @@
             color: #000;
         }
 
-        .page p { margin-bottom: 1.5em; text-indent: 1.5em; }
+        /* Estilos Editoriales Reales */
+        .page p { 
+            margin: 0; 
+            margin-bottom: 1.2em; /* EL SALTO ENTRE PÁRRAFOS QUE PEDÍAS */
+            text-indent: 1.5em; /* Sangría clásica */
+            text-align: justify; 
+            line-height: 1.7;
+        }
+
+
+        /* Primer párrafo (sin sangría) */
+        .page p.first-paragraph { 
+            text-indent: 0; 
+            margin-top: 15px; 
+        }
+
+        /* Párrafo cortado que viene de la página anterior (sin sangría y pegado arriba) */
+        .page p.continued-paragraph { 
+            text-indent: 0; 
+            margin-top: 0;
+        }
+
+        .page-inner-content {
+            flex: 1;
+            display: block;
+            overflow: hidden;
+        }
+
         .page p:first-of-type { text-indent: 0; }
 
         .toc-list { list-style: none; padding: 0; }
@@ -844,143 +884,209 @@
             }, 500);
         }
 
-        function buildBook() {
-            let novel = fileSystem.find(f => f.id === currentNovelId);
-            if (!novel) return;
+   function buildBook() {
+    let novel = fileSystem.find(f => f.id === currentNovelId);
+    if (!novel) return;
 
-            let chapters = fileSystem.filter(f => f.type === 'chapter' && f.parentId === novel.id);
-            chapters.sort((a, b) => (a.order || 0) - (b.order || 0));
+    let chapters = fileSystem.filter(f => f.type === 'chapter' && f.parentId === novel.id);
+    chapters.sort((a, b) => (a.order || 0) - (b.order || 0));
 
-            const CHARS_PER_PAGE = 1600; 
-            let processedChapters = [];
-            let globalPageIndexCounter = 6; 
+    // --- NUEVO SISTEMA DE MEDICIÓN DOM (PAGINACIÓN PERFECTA) ---
+    // Creamos una "página fantasma" invisible para medir exactamente dónde corta el texto
+    const measureContainer = document.createElement('div');
+    measureContainer.style.position = 'absolute';
+    measureContainer.style.top = '-9999px';
+    measureContainer.style.left = '-9999px';
+    measureContainer.style.width = '550px'; // Mismo ancho que el libro final
+    measureContainer.style.height = '800px'; // Misma altura que el libro final
+    measureContainer.innerHTML = `
+        <div class="page page-content" style="display:flex; padding: 45px 50px;">
+            <div class="page-header">M</div>
+            <div class="page-inner-content" id="measure-inner"></div>
+            <div class="page-footer">1</div>
+        </div>
+    `;
+    document.body.appendChild(measureContainer);
+    const innerMeasure = document.getElementById('measure-inner');
 
-            chapters.forEach(chap => {
-                const tempDiv = document.createElement('div');
-                tempDiv.innerHTML = chap.content;
-                let rawParagraphs = Array.from(tempDiv.querySelectorAll('p, div, h1, h2, h3, blockquote'));
-                if(rawParagraphs.length === 0 && tempDiv.innerText.trim()) {
-                    const p = document.createElement('p'); p.innerText = tempDiv.innerText; rawParagraphs = [p];
-                }
+    let processedChapters = [];
+    let globalPageIndexCounter = 6; 
 
-                let pagesContent = [];
-                let currentChunk = `<h2 class="chapter-title">${chap.name}</h2>`;
-                let currentCount = 400;
+    chapters.forEach(chap => {
+        // Extraemos los párrafos respetando los saltos de línea del editor
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = chap.content || "";
+        const paragraphs = tempDiv.innerText.split(/\n+/).map(p => p.trim()).filter(p => p.length > 0);
+        if (paragraphs.length === 0) paragraphs.push("...");
 
-                rawParagraphs.forEach(node => {
-                    const text = node.innerText;
-                    const weight = text.length; 
-                    if (currentCount + weight > CHARS_PER_PAGE) {
-                        pagesContent.push(currentChunk);
-                        currentChunk = `<p>${text}</p>`;
-                        currentCount = weight;
-                    } else {
-                        currentChunk += `<p>${text}</p>`;
-                        currentCount += weight;
+        let pagesContent = [];
+        let currentHtml = `<h2 class="chapter-title-on-page">${chap.name}</h2>`;
+        innerMeasure.innerHTML = currentHtml;
+
+        let isFirstInChap = true;
+
+        for (let i = 0; i < paragraphs.length; i++) {
+            let pText = paragraphs[i];
+            let isContinued = false;
+
+            while (pText.length > 0) {
+                // Asignamos la clase css correcta según si es principio de capítulo o continuación
+                let cssClass = isFirstInChap ? "first-paragraph" : (isContinued ? "continued-paragraph" : "");
+                let testP = `<p class="${cssClass}">${pText}</p>`;
+                
+                innerMeasure.innerHTML = currentHtml + testP;
+
+                // Comprobamos si el párrafo entero cabe en la hoja
+                if (innerMeasure.scrollHeight <= innerMeasure.clientHeight + 2) {
+                    // ¡Cabe perfectamente!
+                    currentHtml += testP;
+                    pText = ""; // Terminamos con este párrafo
+                    isFirstInChap = false;
+                } else {
+                    // El párrafo desborda la página. Hay que cortarlo palabra por palabra.
+                    let words = pText.split(' ');
+                    innerMeasure.innerHTML = currentHtml + `<p class="${cssClass}"></p>`;
+                    let pElement = innerMeasure.lastElementChild;
+                    
+                    let wIdx = 0;
+                    for (; wIdx < words.length; wIdx++) {
+                        pElement.innerHTML += words[wIdx] + " ";
+                        // Si nos pasamos del alto de la hoja, paramos
+                        if (innerMeasure.scrollHeight > innerMeasure.clientHeight) {
+                            break; 
+                        }
                     }
-                });
-                if(currentChunk) pagesContent.push(currentChunk);
 
-                processedChapters.push({
-                    title: chap.name,
-                    contentChunks: pagesContent,
-                    startIndex: globalPageIndexCounter 
-                });
+                    if (wIdx === 0) {
+                        // Si no cabe ni una palabra, la página ya estaba llena. Guardamos y pasamos a la siguiente.
+                        pagesContent.push(currentHtml);
+                        currentHtml = "";
+                        innerMeasure.innerHTML = "";
+                    } else {
+                        // Cortamos el párrafo en el punto exacto
+                        let fits = words.slice(0, wIdx).join(' ');
+                        let overflow = words.slice(wIdx).join(' ');
+                        
+                        currentHtml += `<p class="${cssClass}">${fits}</p>`;
+                        pagesContent.push(currentHtml); // Guardamos la página que se acaba de llenar
+                        
+                        currentHtml = ""; // Limpiamos para la página siguiente
+                        innerMeasure.innerHTML = "";
+                        pText = overflow; // El resto del texto se procesará en el siguiente bucle
+                        isContinued = true; // El siguiente fragmento es una continuación
+                        isFirstInChap = false;
+                    }
+                }
+            }
+        }
+        
+        // Añadir la última hoja si tiene contenido
+        if (currentHtml.trim() !== "") {
+            pagesContent.push(currentHtml);
+        }
 
-                globalPageIndexCounter += pagesContent.length;
-            });
+        processedChapters.push({
+            title: chap.name,
+            contentChunks: pagesContent,
+            startIndex: globalPageIndexCounter 
+        });
 
-            // GENERATE HTML
-            let html = '';
+        globalPageIndexCounter += pagesContent.length;
+    });
 
-            // 1. PORTADA
-            html += `
-                <div class="page page-cover">
-                    <div class="cover-decoration"><i class="fas fa-feather-alt"></i></div>
-                    <h1>${novel.novelTitle || novel.name}</h1>
-                    <div style="width: 60px; height: 3px; background: var(--reader-accent); margin: 30px auto;"></div>
-                    <h2>${novel.author || 'Author'}</h2>
-                </div>
-                <div class="page page-cover"></div>
-            `;
+    // Destruimos la página fantasma de medición
+    document.body.removeChild(measureContainer);
 
-            // 2. TÍTULO
+    // --- GENERACIÓN FINAL DEL HTML DEL LIBRO ---
+    let html = '';
+
+    // Portada
+    html += `
+        <div class="page page-cover">
+            <div class="cover-decoration"><i class="fas fa-feather-alt"></i></div>
+            <h1>${novel.novelTitle || novel.name}</h1>
+            <div style="width: 60px; height: 3px; background: var(--reader-accent); margin: 30px auto;"></div>
+            <h2>${novel.author || 'Author'}</h2>
+        </div>
+        <div class="page page-cover"></div>
+    `;
+
+    // Título interno
+    html += `
+        <div class="page page-content">
+            <div style="height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
+                <h2 style="font-family:'Cinzel', serif; font-size: 2rem; margin-bottom:10px;">${novel.novelTitle || novel.name}</h2>
+                <p style="font-size: 1rem; color: #666;">A WRIT3R Production</p>
+            </div>
+        </div>
+        <div class="page page-content"></div>
+    `;
+
+    // Índice
+    let tocHTML = `<h2 class="chapter-title-on-page" style="margin-top:0;">Table of Contents</h2><ul class="toc-list">`;
+    processedChapters.forEach((pChap, i) => {
+        tocHTML += `<li class="toc-item" onpointerdown="event.stopPropagation(); event.preventDefault(); bookInstance.flip(${pChap.startIndex})">
+            <span>${i + 1}. ${pChap.title}</span>
+            <span>Page ${pChap.startIndex - 5}</span> 
+        </li>`;
+    });
+    tocHTML += `</ul>`;
+    
+    html += `
+        <div class="page page-content">${tocHTML}</div>
+        <div class="page page-content"></div>
+    `;
+
+    // Contenido
+    let globalPageNumber = 1; 
+    processedChapters.forEach((pChap) => {
+        pChap.contentChunks.forEach((content) => {
             html += `
                 <div class="page page-content">
-                    <div style="height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
-                        <h2 style="font-family:'Cinzel', serif; font-size: 2rem; margin-bottom:10px;">${novel.novelTitle || novel.name}</h2>
-                        <p style="font-size: 1rem; color: #666;">A WRIT3R Production</p>
-                    </div>
-                </div>
-                <div class="page page-content"></div>
-            `;
-
-            // 3. ÍNDICE
-            let tocHTML = `<h2 class="chapter-title" style="margin-top:0;">Table of Contents</h2><ul class="toc-list">`;
-            processedChapters.forEach((pChap, i) => {
-                tocHTML += `<li class="toc-item" onclick="event.stopPropagation(); bookInstance.flip(${pChap.startIndex})">
-                    <span>${i + 1}. ${pChap.title}</span>
-                    <span>Page ${pChap.startIndex - 5}</span> 
-                </li>`;
-            });
-            tocHTML += `</ul>`;
-            
-            html += `
-                <div class="page page-content">${tocHTML}</div>
-                <div class="page page-content"></div>
-            `;
-
-            // 4. CONTENIDO
-            let globalPageNumber = 1; 
-
-            processedChapters.forEach((pChap) => {
-                pChap.contentChunks.forEach((content) => {
-                    html += `
-                        <div class="page page-content">
-                            <div class="page-header">${novel.novelTitle || novel.name}</div>
-                            <div style="flex:1; overflow:hidden;">${content}</div>
-                            <div class="page-footer">${globalPageNumber++}</div>
-                        </div>
-                    `;
-                });
-            });
-
-            // 5. FIN
-            html += `
-                <div class="page page-content"></div>
-                <div class="page page-cover">
-                    <div style="margin-top:auto; margin-bottom:auto;">
-                        <i class="fas fa-book-open" style="font-size:4rem; color:var(--reader-accent); margin-bottom: 20px;"></i>
-                        <p style="text-transform:uppercase; letter-spacing:3px;">The End</p>
-                    </div>
+                    <div class="page-header">${novel.novelTitle || novel.name}</div>
+                    <div class="page-inner-content">${content}</div>
+                    <div class="page-footer">${globalPageNumber++}</div>
                 </div>
             `;
+        });
+    });
 
-            bookContainer.innerHTML = html;
+    // Contraportada
+    html += `
+        <div class="page page-content"></div>
+        <div class="page page-cover">
+            <div style="margin-top:auto; margin-bottom:auto;">
+                <i class="fas fa-book-open" style="font-size:4rem; color:var(--reader-accent); margin-bottom: 20px;"></i>
+                <p style="text-transform:uppercase; letter-spacing:3px;">The End</p>
+            </div>
+        </div>
+    `;
 
-            const pageFlip = new St.PageFlip(document.getElementById('book'), {
-                width: 600, 
-                height: 900,
-                size: 'stretch',
-                minWidth: 300,
-                maxWidth: 1000,
-                minHeight: 400,
-                maxHeight: 1400,
-                maxShadowOpacity: 0.5,
-                showCover: true,
-                mobileScrollSupport: false,
-                usePortrait: true 
-            });
+    bookContainer.innerHTML = html;
 
-            pageFlip.loadFromHTML(document.querySelectorAll('.page'));
+    const pageFlip = new St.PageFlip(document.getElementById('book'), {
+        width: 550, 
+        height: 800,
+        size: 'stretch',
+        minWidth: 300,
+        maxWidth: 1000,
+        minHeight: 400,
+        maxHeight: 1400,
+        maxShadowOpacity: 0.4,
+        showCover: true,
+        mobileScrollSupport: false,
+        usePortrait: true 
+    });
 
-            setTimeout(() => {
-                readerLoader.style.display = 'none';
-                document.querySelectorAll('.page').forEach(p => p.style.display = 'block');
-            }, 500);
+    pageFlip.loadFromHTML(document.querySelectorAll('.page'));
 
-            bookInstance = pageFlip;
-        }
+    setTimeout(() => {
+        readerLoader.style.display = 'none';
+        document.querySelectorAll('.page').forEach(p => p.style.display = 'block');
+    }, 500);
+
+    bookInstance = pageFlip;
+}
 
 
         function toggleZenMode() {
